@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reddit Tracker Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0f0f10;--surface:#1a1a1d;--surface2:#232327;--surface3:#2a2a2e;
+  --border:#2e2e34;--border2:#3d3d45;--text:#f0f0f0;--muted:#888;--muted2:#666;
+  --orange:#ff5500;--odim:rgba(255,85,0,0.13);
+  --green:#4caf7d;--gdim:rgba(76,175,125,0.13);
+  --red:#e05555;--rdim:rgba(224,85,85,0.13);
+  --amber:#f0a030;--adim:rgba(240,160,48,0.13);
+  --blue:#5b8af0;--bdim:rgba(91,138,240,0.13);
+  --purple:#9b6ff0;--pdim:rgba(155,111,240,0.13);
+  --r:10px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh;}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--font);font-size:13px;padding:8px 10px;outline:none;transition:border-color 0.15s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--orange);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;}
+button{cursor:pointer;font-family:var(--font);}
+
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;}
+.hdr-logo{width:30px;height:30px;background:var(--orange);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:#fff;flex-shrink:0;}
+.hdr h1{font-size:15px;font-weight:600;}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.rpill{padding:4px 11px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:500;border:1px solid;}
+.rg{background:var(--gdim);color:var(--green);border-color:var(--green);}
+.rw{background:var(--adim);color:var(--amber);border-color:var(--amber);}
+.rb{background:var(--rdim);color:var(--red);border-color:var(--red);}
+#acct-select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);width:150px;}
+
+.tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;overflow-x:auto;}
+.tab{padding:10px 16px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;white-space:nowrap;transition:all 0.15s;margin-bottom:-1px;}
+.tab.on{color:var(--orange);border-bottom-color:var(--orange);font-weight:500;}
+.tab:hover:not(.on){color:var(--text);}
+
+.content{max-width:1100px;margin:0 auto;padding:20px;}
+.panel{display:none;}.panel.on{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.card+.card{margin-top:12px;}
+.card-title{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.06em;font-family:var(--mono);}
+
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
+.sl{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;}
+.sv{font-size:26px;font-weight:600;font-family:var(--mono);}
+.co{color:var(--orange);}.cg{color:var(--green);}.cb{color:var(--blue);}.ca{color:var(--amber);}.cp{color:var(--purple);}
+
+.rbar-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;}
+.rbar-label{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:7px;display:flex;justify-content:space-between;}
+.rbar-track{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.rbar-fill{height:100%;border-radius:4px;transition:width 0.4s;}
+
+.fgroup{margin-bottom:10px;}
+.fgroup label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-family:var(--mono);}
+.btn-orange{background:var(--orange);color:#fff;border:none;border-radius:var(--r);padding:10px 20px;font-size:14px;font-weight:600;width:100%;transition:opacity 0.15s;}
+.btn-orange:hover{opacity:0.85;}
+.btn-sm{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;transition:all 0.15s;}
+.btn-sm:hover{border-color:var(--border2);}
+.btn-green{background:var(--gdim);color:var(--green);border:1px solid var(--green);border-radius:8px;padding:6px 14px;font-size:12px;}
+.btn-blue{background:var(--bdim);color:var(--blue);border:1px solid var(--blue);border-radius:8px;padding:6px 14px;font-size:12px;}
+.type-row{display:flex;gap:6px;flex-wrap:wrap;}
+.tbtn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-family:var(--mono);transition:all 0.15s;}
+.tbtn.ap{background:var(--odim);color:var(--orange);border-color:var(--orange);}
+.tbtn.ac{background:var(--bdim);color:var(--blue);border-color:var(--blue);}
+.tbtn.aa{background:var(--gdim);color:var(--green);border-color:var(--green);}
+
+.alist{display:flex;flex-direction:column;gap:8px;}
+.acard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:grid;grid-template-columns:70px 1fr auto;gap:12px;align-items:start;}
+.atype{padding:3px 0;border-radius:6px;font-size:11px;font-weight:600;font-family:var(--mono);text-align:center;text-transform:uppercase;}
+.at-post{background:var(--odim);color:var(--orange);}
+.at-comment{background:var(--bdim);color:var(--blue);}
+.at-answer{background:var(--gdim);color:var(--green);}
+.a-sub{font-size:13px;font-weight:500;color:var(--orange);font-family:var(--mono);}
+.a-id{font-size:11px;color:var(--muted);font-family:var(--mono);background:var(--surface2);padding:2px 7px;border-radius:4px;}
+.a-who{font-size:11px;color:var(--purple);font-family:var(--mono);}
+.a-content{font-size:13px;color:var(--text);line-height:1.5;margin:4px 0;}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--mono);}
+.b-promo{background:var(--rdim);color:var(--red);}
+.b-genuine{background:var(--gdim);color:var(--green);}
+.a-time{font-size:11px;color:var(--muted);font-family:var(--mono);white-space:nowrap;}
+.del-btn{background:none;border:none;color:var(--border2);font-size:18px;line-height:1;transition:color 0.15s;padding:0 2px;}
+.del-btn:hover{color:var(--red);}
+
+.filt-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.fbtn{padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-family:var(--mono);transition:all 0.15s;}
+.fbtn.on{background:var(--odim);color:var(--orange);border-color:var(--orange);}
+.date-inputs{display:flex;gap:6px;align-items:center;margin-left:auto;}
+.date-inputs input[type=date]{width:130px;padding:4px 8px;font-size:12px;}
+.date-inputs label{font-size:11px;color:var(--muted);white-space:nowrap;}
+.empty{text-align:center;padding:50px 20px;color:var(--muted);font-size:13px;}
+
+.rules-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px;font-size:12px;line-height:1.7;color:var(--muted);}
+.ri{display:flex;gap:8px;margin-bottom:3px;}
+.rn{color:var(--orange);font-family:var(--mono);font-size:11px;flex-shrink:0;margin-top:2px;}
+.rules-head{font-size:11px;font-weight:600;color:var(--amber);margin-bottom:8px;font-family:var(--mono);}
+
+.ac-result{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-top:16px;}
+.ac-score{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:20px;font-size:14px;font-weight:600;margin-bottom:14px;}
+.sc-good{background:var(--gdim);color:var(--green);}
+.sc-needs{background:var(--adim);color:var(--amber);}
+.sc-bad{background:var(--rdim);color:var(--red);}
+.ac-section{margin-bottom:14px;}
+.ac-stitle{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-family:var(--mono);}
+.ac-item{display:flex;gap:8px;font-size:13px;line-height:1.6;margin-bottom:6px;color:var(--text);}
+.suggested-box{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:0 var(--r) var(--r) 0;padding:14px;font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;}
+.spin{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.acc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.acc-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.acc-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.acc-avatar{width:38px;height:38px;border-radius:50%;background:var(--odim);color:var(--orange);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;flex-shrink:0;}
+.acc-name{font-size:14px;font-weight:500;}
+.acc-status{font-size:11px;font-family:var(--mono);}
+.st-active{color:var(--green);}.st-banned{color:var(--red);}
+.acc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.acc-stat{background:var(--surface2);border-radius:8px;padding:8px;text-align:center;}
+.acc-stat-val{font-size:18px;font-weight:600;font-family:var(--mono);}
+.acc-stat-lbl{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.acc-info{font-size:12px;color:var(--muted);line-height:1.9;}
+.acc-info span{color:var(--text);}
+.acc-actions{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;}
+.btn-danger{background:var(--rdim);color:var(--red);border:1px solid var(--red);border-radius:8px;padding:5px 12px;font-size:12px;}
+.btn-danger:hover{background:var(--red);color:#fff;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+.week-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;}
+.week-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;}
+.wv{font-size:28px;font-weight:600;font-family:var(--mono);margin-bottom:4px;}
+.wl{font-size:12px;color:var(--muted);font-family:var(--mono);}
+.day-bars{display:flex;gap:6px;align-items:flex-end;height:64px;margin-top:12px;}
+.day-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.day-bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;}
+.day-lbl{font-size:9px;color:var(--muted);font-family:var(--mono);}
+
+/* import/export modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:500;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:90%;max-width:500px;}
+.modal h3{font-size:15px;font-weight:500;margin-bottom:8px;}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;}
+.modal textarea{height:120px;font-family:var(--mono);font-size:12px;margin-bottom:12px;}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+
+/* hosting banner */
+.host-banner{background:var(--surface);border:1px solid var(--amber);border-radius:var(--r);padding:14px 16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px;}
+.host-icon{font-size:20px;flex-shrink:0;margin-top:2px;}
+.host-text{font-size:13px;color:var(--text);line-height:1.7;}
+.host-text strong{color:var(--amber);}
+.host-text a{color:var(--blue);text-decoration:none;}
+
+@media(max-width:700px){.two-col{grid-template-columns:1fr;}.date-inputs{margin-left:0;flex-wrap:wrap;}.acard{grid-template-columns:60px 1fr auto;gap:8px;}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-logo">r/</div>
+  <h1>Reddit Tracker Pro</h1>
+  <div class="hdr-right">
+    <select id="acct-select" onchange="onAcctFilter()"><option value="all">All accounts</option></select>
+    <div class="rpill rg" id="ratio-pill">9:1 Safe</div>
+    <button class="btn-sm" onclick="openExport()" title="Export / Import data">&#8645; Sync</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab on"  onclick="showTab('dashboard',this)">Dashboard</button>
+  <button class="tab"     onclick="showTab('log',this)">Log Activity</button>
+  <button class="tab"     onclick="showTab('checker',this)">Answer Checker</button>
+  <button class="tab"     onclick="showTab('activity',this)">Activity Log</button>
+  <button class="tab"     onclick="showTab('rules',this)">Subreddit Rules</button>
+  <button class="tab"     onclick="showTab('accounts',this)">Accounts</button>
+  <button class="tab"     onclick="showTab('hosting',this)">How to Share</button>
+</div>
+
+<!-- DASHBOARD -->
+<div class="content panel on" id="p-dashboard">
+  <div class="sgrid" id="dash-stats"></div>
+  <div class="rbar-wrap">
+    <div class="rbar-label"><span>9:1 Rule - Genuine vs Promotional</span><span id="ratio-text">No activity yet</span></div>
+    <div class="rbar-track"><div class="rbar-fill" id="ratio-fill" style="width:0%;background:var(--green);"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">This week - daily activity</div>
+    <div class="week-grid" id="week-stats"></div>
+    <div class="day-bars" id="day-bars"></div>
+  </div>
+</div>
+
+<!-- LOG ACTIVITY -->
+<div class="content panel" id="p-log">
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Log new activity</div>
+      <div class="fgroup"><label>Type</label>
+        <div class="type-row">
+          <button class="tbtn ap" onclick="setType('post',this)">Post</button>
+          <button class="tbtn"    onclick="setType('comment',this)">Comment</button>
+          <button class="tbtn"    onclick="setType('answer',this)">Answer</button>
+        </div>
+      </div>
+      <div class="fgroup"><label>Subreddit</label><input id="f-sub" placeholder="e.g. r/marketing" oninput="onSubPreview(this.value,'f-rules-preview')"/></div>
+      <div class="fgroup"><label>Reddit Account</label><select id="f-acct"><option value="">Select account</option></select></div>
+      <div class="fgroup"><label>Content / Note</label><textarea id="f-content" rows="3" placeholder="One sentence about what you posted or said..."></textarea></div>
+      <div class="fgroup"><label>Promotional?</label>
+        <select id="f-promo">
+          <option value="no">No - genuine contribution</option>
+          <option value="yes">Yes - promotional / self-link</option>
+        </select>
+      </div>
+      <div class="fgroup"><label>Logged by (your name)</label><input id="f-loggedby" placeholder="e.g. Monica"/></div>
+      <button class="btn-orange" onclick="addEntry()">+ Log Activity</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Subreddit rules reminder</div>
+      <div class="rules-box" id="f-rules-preview"><span style="color:var(--muted2);">Type a subreddit to see its rules here.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ANSWER CHECKER -->
+<div class="content panel" id="p-checker">
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Check your answer before posting</div>
+      <div class="fgroup"><label>Subreddit</label><input id="ac-sub" placeholder="e.g. r/entrepreneur" oninput="onSubPreview(this.value,'ac-rules-box')"/></div>
+      <div class="fgroup"><label>Your brand / website</label><input id="ac-brand" placeholder="e.g. sparkl.io"/></div>
+      <div class="fgroup"><label>Paste the Reddit question</label><textarea id="ac-question" rows="4" placeholder="Paste the Reddit question here..."></textarea></div>
+      <div class="fgroup"><label>Your planned answer</label><textarea id="ac-answer" rows="5" placeholder="Type or paste your answer here..."></textarea></div>
+      <button class="btn-orange" onclick="checkAnswer()">Check My Answer</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Subreddit rules</div>
+      <div class="rules-box" id="ac-rules-box"><span style="color:var(--muted2);">Type a subreddit to see its rules.</span></div>
+    </div>
+  </div>
+  <div id="ac-result-area"></div>
+</div>
+
+<!-- ACTIVITY LOG -->
+<div class="content panel" id="p-activity">
+  <div class="filt-row">
+    <button class="fbtn on" onclick="setFilt('all',this)">All</button>
+    <button class="fbtn"    onclick="setFilt('post',this)">Posts</button>
+    <button class="fbtn"    onclick="setFilt('comment',this)">Comments</button>
+    <button class="fbtn"    onclick="setFilt('answer',this)">Answers</button>
+    <button class="fbtn"    onclick="setFilt('promo',this)">Promotional</button>
+    <button class="fbtn"    onclick="setFilt('genuine',this)">Genuine</button>
+    <div class="date-inputs">
+      <label>From</label><input type="date" id="d-from" onchange="renderList()"/>
+      <label>To</label><input type="date" id="d-to" onchange="renderList()"/>
+      <button class="btn-sm" onclick="clearDates()">Clear</button>
+    </div>
+  </div>
+  <div id="period-stats" style="margin-bottom:14px;"></div>
+  <div class="alist" id="act-list"></div>
+</div>
+
+<!-- SUBREDDIT RULES -->
+<div class="content panel" id="p-rules">
+  <div id="rules-main-list"></div>
+</div>
+
+<!-- ACCOUNTS -->
+<div class="content panel" id="p-accounts">
+  <div class="two-col" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="card-title">Add new account</div>
+      <div class="fgroup"><label>Reddit Username</label><input id="na-user" placeholder="u/yourname"/></div>
+      <div class="fgroup"><label>Karma Points</label><input id="na-karma" type="number" placeholder="e.g. 1250"/></div>
+      <div class="fgroup"><label>Account Status</label>
+        <select id="na-status"><option value="active">Active</option><option value="banned">Banned</option></select>
+      </div>
+      <div class="fgroup"><label>Notes (optional)</label><input id="na-notes" placeholder="e.g. Main brand account"/></div>
+      <button class="btn-orange" onclick="addAccount()">+ Add Account</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Share data with team</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:12px;">
+        To share your data with teammates:<br>
+        1. Click the <span style="color:var(--text);font-weight:500;">Sync button</span> (top right header)<br>
+        2. Click <span style="color:var(--text);font-weight:500;">Export Data</span> and copy the text<br>
+        3. Send it to your teammate<br>
+        4. They paste it in <span style="color:var(--text);font-weight:500;">Import Data</span> and click Import<br>
+      </div>
+      <div style="font-size:13px;color:var(--amber);">Or host the file online so everyone shares the same URL automatically. See the <strong>How to Share</strong> tab.</div>
+    </div>
+  </div>
+  <div class="acc-grid" id="acc-grid"></div>
+</div>
+
+<!-- HOW TO SHARE / HOSTING GUIDE -->
+<div class="content panel" id="p-hosting">
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-title">The problem - why local files cannot be shared</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.9;">
+      When you open this file from your Downloads folder, the URL shows <span style="color:var(--red);font-family:var(--mono);font-size:12px;">file:///C:/Users/...</span> - this is a file on your computer only. Nobody else can access your computer's files via a link. You need to host it on the internet first.
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px;border-color:var(--green);">
+    <div class="card-title" style="color:var(--green);">Option 1 - Netlify Drop (free, 30 seconds, no account needed)</div>
+    <div style="font-size:13px;color:var(--text);line-height:2;">
+      <div><span style="color:var(--orange);font-family:var(--mono);">Step 1</span> &nbsp;Go to <span style="color:var(--blue);font-family:var(--mono);">netlify.com/drop</span> in your browser</div>
+      <div><span style="color:var(--orange);font-family:var(--mono);">Step 2</span> &nbsp;Drag and drop this HTML file into the box on that page</div>
+      <div><span style="color:var(--orange);font-family:var(--mono);">Step 3</span> &nbsp;Netlify gives you a free link like <span style="color:var(--green);font-family:var(--mono);">https://random-name.netlify.app</span></div>
+      <div><span style="color:var(--orange);font-family:var(--mono);">Step 4</span> &nbsp;Copy that link and send it to your team. They open it. Done.</div>
+    </div>
+    <div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--amber);">
+      Note: Each person who opens the Netlify link will have their own saved data on their own device. Use the Sync / Export-Import button to share data between teammates.
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-title">Option 2 - GitHub Pages (free, permanent link)</div>
+    <div style="font-size:13px;color:var(--text);line-height:2;">
+      <div><span style="color:var(--orange);font-family:var(--mono);">Step 1</span> &nbsp;Go to github.com and create a free account</div>
+      <div><span style="color:var(--orange);font-family:var(--mono);">Step 2</span> &nbsp;Create a new repository, name it anything (e.g. reddit-tracker)</div>
+      <div><span style="color:var(--orange);font-family:var(--mono);">Step 3</span> &nbsp;Upload this HTML file - rename it to <span style="color:var(--green);font-family:var(--mono);">index.html</span> first</div>
+      <div><span style="color:var(--orange);font-family:var(--mono);">Step 4</span> &nbsp;Go to Settings - Pages - set source to main branch</div>
+      <div><span style="color:var(--orange);font-family:var(--mono);">Step 5</span> &nbsp;You get a link like <span style="color:var(--green);font-family:var(--mono);">https://yourname.github.io/reddit-tracker</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Sharing data between teammates - the Sync method</div>
+    <div style="font-size:13px;color:var(--text);line-height:2;">
+      <div><span style="color:var(--orange);font-family:var(--mono);">You (person sending data)</span></div>
+      <div style="color:var(--muted);">Click the Sync button (top right) - click Export Data - copy all the text - send it to your teammate via WhatsApp, email, Slack, anything.</div>
+      <div style="margin-top:10px;"><span style="color:var(--orange);font-family:var(--mono);">Teammate (person receiving data)</span></div>
+      <div style="color:var(--muted);">Click the Sync button - click Import Data - paste the text they received - click Import. Their tracker now has all your data.</div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT/IMPORT MODAL -->
+<div class="modal-bg" id="sync-modal" style="display:none;">
+  <div class="modal">
+    <h3>Sync Data</h3>
+    <p>Export your data to share with teammates, or import data you received from them.</p>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="btn-green" onclick="doExport()">Export My Data</button>
+      <button class="btn-blue"  onclick="showImport()">Import Data</button>
+      <button class="btn-sm"    onclick="closeModal()" style="margin-left:auto;">Close</button>
+    </div>
+    <div id="sync-content"></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────
+let entries=[], accounts=[], activeType='post', activeFilt='all', acctFilt='all';
+const SK_E='rtp-entries-v3', SK_A='rtp-accounts-v3';
+
+// ── LOCALSTORAGE ───────────────────────────────────────────────
+function loadData(){
+  try{const e=localStorage.getItem(SK_E);if(e)entries=JSON.parse(e);}catch(x){entries=[];}
+  try{const a=localStorage.getItem(SK_A);if(a)accounts=JSON.parse(a);}catch(x){accounts=[];}
+  syncAcctDropdowns();render();
+}
+function saveE(){try{localStorage.setItem(SK_E,JSON.stringify(entries));}catch(x){}}
+function saveA(){try{localStorage.setItem(SK_A,JSON.stringify(accounts));}catch(x){}}
+
+// ── SUBREDDIT RULES ────────────────────────────────────────────
+const RULES={
+  default:["Be respectful and civil to all users.","No spam or excessive self-promotion. Follow the 10% rule.","No vote manipulation or asking others to upvote your posts.","No sharing personal info of other users.","Follow Reddit site-wide content policy at all times.","Use proper post flair if the subreddit requires it."],
+  marketing:["No direct promotion of your own products or services.","Share knowledge first - links only when genuinely helpful.","Case studies must be transparent about results.","No MLM, affiliate spam, or paid survey posts.","Feedback threads are for critique only."],
+  entrepreneur:["Share your journey and lessons, not just your product.","No fundraising or investment solicitation.","AMAs require mod pre-approval.","Be transparent about your business stage.","Success posts must include lessons learned."],
+  seo:["No low-effort check-my-site posts.","Share data and case studies, not just opinions.","Tool recommendations must disclose affiliation.","No black-hat tactics discussion.","Cite sources for algorithm update claims."],
+  socialmedia:["No follow-for-follow or like-for-like requests.","No discussion of buying followers or engagement.","Promotional posts require a Promo flair.","Screenshots must include proper context.","Always disclose sponsored content."],
+  smallbusiness:["No direct advertising - be a community member first.","Share problems and solutions, not just wins.","No recruitment without mod approval.","Affiliate links must be disclosed.","Respect other members and their businesses."],
+  freelance:["No direct client solicitation in posts.","Job board posts go in the weekly thread only.","No sharing client private information.","Constructive feedback only on portfolios.","Rate discussions are welcome but be respectful."],
+  startups:["No self-promotion without community contribution.","Feedback requests must be genuine, not just promotion.","No spam pitches or cold outreach to members.","Share failures and learnings, not just wins.","Be specific when asking for advice."],
+  business:["No direct advertising or sales posts.","Share advice backed by real experience.","No recruiting or spam.","Disclose conflicts of interest.","Respect confidentiality of business information."]
+};
+function getRules(s){
+  if(!s)return RULES.default;
+  const c=s.toLowerCase().replace(/^r\//,'').replace(/\s+/g,'');
+  for(const k of Object.keys(RULES)){if(k!=='default'&&c.includes(k))return RULES[k];}
+  return RULES.default;
+}
+function onSubPreview(v,id){
+  const rules=getRules(v),box=document.getElementById(id);
+  const lbl=v?(v.startsWith('r/')?v:'r/'+v)+' - Key Rules':'General Reddit Rules';
+  box.innerHTML='<div class="rules-head">'+lbl+'</div>'+
+    rules.map((r,i)=>'<div class="ri"><span class="rn">'+(i+1)+'.</span><span>'+r+'</span></div>').join('');
+}
+
+// ── TABS ───────────────────────────────────────────────────────
+function showTab(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+  btn.classList.add('on');
+}
+function setType(t,btn){
+  activeType=t;
+  document.querySelectorAll('.tbtn').forEach(b=>b.className='tbtn');
+  btn.classList.add(t==='post'?'ap':t==='comment'?'ac':'aa');
+}
+
+// ── ENTRIES ────────────────────────────────────────────────────
+function addEntry(){
+  const sub=document.getElementById('f-sub').value.trim();
+  const cont=document.getElementById('f-content').value.trim();
+  const acct=document.getElementById('f-acct').value;
+  const promo=document.getElementById('f-promo').value;
+  const by=document.getElementById('f-loggedby').value.trim();
+  if(!sub||!cont){alert('Please fill in Subreddit and Content.');return;}
+  entries.unshift({id:Date.now(),type:activeType,sub:sub.startsWith('r/')?sub:'r/'+sub,account:acct||'unknown',content:cont,promo:promo==='yes',loggedby:by,time:new Date().toISOString()});
+  saveE();render();
+  document.getElementById('f-sub').value='';
+  document.getElementById('f-content').value='';
+  document.getElementById('f-promo').value='no';
+  document.getElementById('f-rules-preview').innerHTML='<span style="color:var(--muted2);">Type a subreddit to see its rules here.</span>';
+}
+function deleteEntry(id){entries=entries.filter(e=>e.id!==id);saveE();render();}
+
+// ── ACCOUNTS ───────────────────────────────────────────────────
+function addAccount(){
+  const user=document.getElementById('na-user').value.trim();
+  if(!user){alert('Please enter a username.');return;}
+  accounts.push({id:Date.now(),username:user.startsWith('u/')?user:'u/'+user,karma:parseInt(document.getElementById('na-karma').value)||0,status:document.getElementById('na-status').value,notes:document.getElementById('na-notes').value.trim()});
+  saveA();syncAcctDropdowns();renderAccounts();
+  ['na-user','na-karma','na-notes'].forEach(id=>document.getElementById(id).value='');
+}
+function deleteAccount(id){accounts=accounts.filter(a=>a.id!==id);saveA();syncAcctDropdowns();renderAccounts();}
+function toggleBan(id){const a=accounts.find(a=>a.id===id);if(a){a.status=a.status==='active'?'banned':'active';saveA();renderAccounts();}}
+function updateKarma(id){const v=document.getElementById('k-'+id).value;const a=accounts.find(a=>a.id===id);if(a){a.karma=parseInt(v)||0;saveA();}}
+function syncAcctDropdowns(){
+  const opts='<option value="">Select account</option>'+accounts.map(a=>'<option value="'+a.username+'">'+a.username+'</option>').join('');
+  document.getElementById('f-acct').innerHTML=opts;
+  document.getElementById('acct-select').innerHTML='<option value="all">All accounts</option>'+accounts.map(a=>'<option value="'+a.username+'">'+a.username+'</option>').join('');
+}
+function onAcctFilter(){acctFilt=document.getElementById('acct-select').value;render();}
+
+// ── EXPORT / IMPORT ────────────────────────────────────────────
+function openExport(){document.getElementById('sync-modal').style.display='flex';document.getElementById('sync-content').innerHTML='';}
+function closeModal(){document.getElementById('sync-modal').style.display='none';}
+function doExport(){
+  const data=JSON.stringify({entries,accounts},null,2);
+  document.getElementById('sync-content').innerHTML=
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Copy all the text below and send it to your teammate:</div>'+
+    '<textarea readonly style="height:160px;font-family:var(--mono);font-size:11px;" onclick="this.select()">'+esc(data)+'</textarea>'+
+    '<button class="btn-green" style="margin-top:8px;width:100%;" onclick="copyExport()">Copy to Clipboard</button>'+
+    '<div id="copy-msg" style="font-size:12px;color:var(--green);margin-top:6px;display:none;">Copied!</div>';
+}
+function copyExport(){
+  const ta=document.querySelector('#sync-content textarea');
+  ta.select();document.execCommand('copy');
+  document.getElementById('copy-msg').style.display='block';
+  setTimeout(()=>document.getElementById('copy-msg').style.display='none',2000);
+}
+function showImport(){
+  document.getElementById('sync-content').innerHTML=
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Paste the exported data from your teammate below then click Import:</div>'+
+    '<textarea id="import-ta" style="height:160px;font-family:var(--mono);font-size:11px;" placeholder="Paste data here..."></textarea>'+
+    '<button class="btn-blue" style="margin-top:8px;width:100%;" onclick="doImport()">Import Data</button>'+
+    '<div id="import-msg" style="font-size:12px;margin-top:6px;display:none;"></div>';
+}
+function doImport(){
+  try{
+    const raw=document.getElementById('import-ta').value.trim();
+    const data=JSON.parse(raw);
+    if(data.entries) entries=data.entries;
+    if(data.accounts) accounts=data.accounts;
+    saveE();saveA();syncAcctDropdowns();render();
+    const msg=document.getElementById('import-msg');
+    msg.style.display='block';msg.style.color='var(--green)';
+    msg.textContent='Imported '+entries.length+' entries and '+accounts.length+' accounts successfully!';
+  }catch(e){
+    const msg=document.getElementById('import-msg');
+    msg.style.display='block';msg.style.color='var(--red)';
+    msg.textContent='Error: Invalid data. Make sure you copied the full exported text.';
+  }
+}
+
+// ── RENDER ─────────────────────────────────────────────────────
+function render(){renderDash();renderList();renderRulesTab();renderAccounts();}
+function filtered(){let d=entries;if(acctFilt!=='all')d=d.filter(e=>e.account===acctFilt);return d;}
+
+function renderDash(){
+  const d=filtered();
+  const total=d.length,posts=d.filter(e=>e.type==='post').length,
+    comms=d.filter(e=>e.type==='comment').length,
+    ans=d.filter(e=>e.type==='answer').length,
+    promo=d.filter(e=>e.promo).length,genuine=total-promo;
+  document.getElementById('dash-stats').innerHTML=
+    sc('Total',''+total,'co')+sc('Posts',''+posts,'cb')+
+    sc('Comments',''+comms,'cp')+sc('Answers',''+ans,'cg')+sc('Promotional',''+promo,'ca');
+  const pill=document.getElementById('ratio-pill'),fill=document.getElementById('ratio-fill'),rt=document.getElementById('ratio-text');
+  if(!total){rt.textContent='No activity yet';fill.style.width='0%';fill.style.background='var(--green)';pill.className='rpill rg';pill.textContent='9:1 Safe';return;}
+  const pct=Math.round((promo/total)*100);
+  fill.style.width=pct+'%';rt.textContent=genuine+' genuine / '+promo+' promotional ('+pct+'% promo)';
+  if(promo/total<=0.1){fill.style.background='var(--green)';pill.className='rpill rg';pill.textContent='9:1 Safe';}
+  else if(promo/total<=0.2){fill.style.background='var(--amber)';pill.className='rpill rw';pill.textContent='Watch Out';}
+  else{fill.style.background='var(--red)';pill.className='rpill rb';pill.textContent='Too Promo!';}
+  renderWeekly(d);
+}
+function sc(l,v,c){return '<div class="scard"><div class="sl">'+l+'</div><div class="sv '+c+'">'+v+'</div></div>';}
+function renderWeekly(d){
+  const now=new Date(),days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let dc=[];
+  for(let i=6;i>=0;i--){
+    const dt=new Date(now);dt.setDate(dt.getDate()-i);
+    dc.push({lbl:days[dt.getDay()],cnt:d.filter(e=>e.time.slice(0,10)===dt.toISOString().slice(0,10)).length,today:i===0});
+  }
+  const wT=dc.reduce((s,x)=>s+x.cnt,0),wP=d.filter(e=>(new Date()-new Date(e.time))<7*86400000&&e.promo).length;
+  document.getElementById('week-stats').innerHTML=
+    '<div class="week-card"><div class="wv co">'+wT+'</div><div class="wl">This week</div></div>'+
+    '<div class="week-card"><div class="wv cg">'+(wT-wP)+'</div><div class="wl">Genuine</div></div>'+
+    '<div class="week-card"><div class="wv ca">'+wP+'</div><div class="wl">Promotional</div></div>';
+  const mx=Math.max(...dc.map(x=>x.cnt),1);
+  document.getElementById('day-bars').innerHTML=dc.map(x=>
+    '<div class="day-bar-wrap"><div class="day-bar" style="height:'+Math.max(3,Math.round((x.cnt/mx)*56))+'px;background:'+(x.today?'var(--orange)':'var(--surface3)')+';border:1px solid '+(x.today?'var(--orange)':'var(--border2)')+'"></div><div class="day-lbl">'+x.lbl+'</div></div>'
+  ).join('');
+}
+function renderList(){
+  const list=document.getElementById('act-list');
+  const fv=document.getElementById('d-from').value,tv=document.getElementById('d-to').value;
+  let d=filtered();
+  if(activeFilt==='post')d=d.filter(e=>e.type==='post');
+  else if(activeFilt==='comment')d=d.filter(e=>e.type==='comment');
+  else if(activeFilt==='answer')d=d.filter(e=>e.type==='answer');
+  else if(activeFilt==='promo')d=d.filter(e=>e.promo);
+  else if(activeFilt==='genuine')d=d.filter(e=>!e.promo);
+  if(fv)d=d.filter(e=>e.time.slice(0,10)>=fv);
+  if(tv)d=d.filter(e=>e.time.slice(0,10)<=tv);
+  const ps=document.getElementById('period-stats');
+  if(fv||tv){
+    const t=d.length,p=d.filter(e=>e.type==='post').length,c=d.filter(e=>e.type==='comment').length,
+      a=d.filter(e=>e.type==='answer').length,pr=d.filter(e=>e.promo).length;
+    ps.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">'+
+      pst('Total',t,'co')+pst('Posts',p,'cb')+pst('Comments',c,'cp')+pst('Answers',a,'cg')+pst('Promo',pr,'ca')+'</div>';
+  }else ps.innerHTML='';
+  if(!d.length){list.innerHTML='<div class="empty">No activities found for this filter.</div>';return;}
+  list.innerHTML=d.map(e=>{
+    const dt=new Date(e.time),ts=dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'})+' '+dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    return '<div class="acard">'+
+      '<div class="atype at-'+e.type+'">'+e.type+'</div>'+
+      '<div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px;"><span class="a-sub">'+e.sub+'</span><span class="a-id">'+e.account+'</span>'+(e.loggedby?'<span class="a-who">by '+esc(e.loggedby)+'</span>':'')+
+      '</div><div class="a-content">'+esc(e.content)+'</div>'+
+      '<div style="margin-top:4px;"><span class="badge '+(e.promo?'b-promo':'b-genuine')+'">'+(e.promo?'Promotional':'Genuine')+'</span></div></div>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;"><span class="a-time">'+ts+'</span>'+
+      '<button class="del-btn" onclick="deleteEntry('+e.id+')">&#215;</button></div></div>';
+  }).join('');
+}
+function pst(l,v,c){return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 14px;"><div style="font-size:11px;color:var(--muted);font-family:var(--mono);">'+l+'</div><div style="font-size:20px;font-weight:600;font-family:var(--mono);" class="'+c+'">'+v+'</div></div>';}
+function renderRulesTab(){
+  const list=document.getElementById('rules-main-list'),d=filtered();
+  const subs=[...new Set(d.map(e=>e.sub))];
+  if(!subs.length){list.innerHTML='<div class="empty">Log activities first. Rules appear here automatically.</div>';return;}
+  list.innerHTML=subs.map(sub=>{
+    const rules=getRules(sub),cnt=d.filter(e=>e.sub===sub).length;
+    return '<div class="card" style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-size:14px;font-weight:500;color:var(--orange);font-family:var(--mono);">'+sub+'</span><span style="font-size:11px;color:var(--muted);font-family:var(--mono);">'+cnt+' activit'+(cnt===1?'y':'ies')+'</span></div>'+
+    rules.map((r,i)=>'<div style="display:flex;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border);color:var(--text);line-height:1.6;"><span style="color:var(--orange);font-family:var(--mono);font-size:11px;flex-shrink:0;margin-top:2px;">'+(i+1)+'.</span><span>'+r+'</span></div>').join('')+'</div>';
+  }).join('');
+}
+function renderAccounts(){
+  const grid=document.getElementById('acc-grid');
+  if(!accounts.length){grid.innerHTML='<div class="empty">No accounts added yet.</div>';return;}
+  grid.innerHTML=accounts.map(a=>{
+    const posts=entries.filter(e=>e.account===a.username&&e.type==='post').length;
+    const comms=entries.filter(e=>e.account===a.username&&e.type==='comment').length;
+    const ans=entries.filter(e=>e.account===a.username&&e.type==='answer').length;
+    const init=a.username.replace('u/','').slice(0,2).toUpperCase();
+    return '<div class="acc-card"><div class="acc-top"><div class="acc-avatar">'+init+'</div><div><div class="acc-name">'+esc(a.username)+'</div><div class="acc-status '+(a.status==='active'?'st-active':'st-banned')+'">&#9679; '+(a.status==='active'?'Active':'Banned')+'</div></div></div>'+
+    '<div class="acc-stats"><div class="acc-stat"><div class="acc-stat-val cb">'+posts+'</div><div class="acc-stat-lbl">Posts</div></div><div class="acc-stat"><div class="acc-stat-val cp">'+comms+'</div><div class="acc-stat-lbl">Comments</div></div><div class="acc-stat"><div class="acc-stat-val cg">'+ans+'</div><div class="acc-stat-lbl">Answers</div></div></div>'+
+    '<div class="acc-info"><div>Karma: <span><input id="k-'+a.id+'" type="number" value="'+(a.karma||0)+'" style="width:80px;display:inline-block;padding:2px 6px;font-size:12px;" onblur="updateKarma('+a.id+')"/></span></div><div>Total: <span>'+(posts+comms+ans)+' contributions</span></div>'+(a.notes?'<div>Note: <span>'+esc(a.notes)+'</span></div>':'')+
+    '</div><div class="acc-actions"><button class="btn-sm" onclick="toggleBan('+a.id+')">'+(a.status==='active'?'Mark Banned':'Mark Active')+'</button><button class="btn-danger" onclick="deleteAccount('+a.id+')">Remove</button></div></div>';
+  }).join('');
+}
+
+// ── ANSWER CHECKER ─────────────────────────────────────────────
+async function checkAnswer(){
+  const sub=document.getElementById('ac-sub').value.trim();
+  const brand=document.getElementById('ac-brand').value.trim();
+  const question=document.getElementById('ac-question').value.trim();
+  const answer=document.getElementById('ac-answer').value.trim();
+  const area=document.getElementById('ac-result-area');
+  if(!sub||!answer){alert('Please fill in Subreddit and Your Answer.');return;}
+  const rules=getRules(sub);
+  area.innerHTML='<div class="ac-result" style="text-align:center;padding:30px;"><div class="spin"></div><br><span style="color:var(--muted);font-size:13px;margin-left:10px;">Checking your answer...</span></div>';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`You are a Reddit community expert. Analyse this Reddit answer before posting.
+
+Subreddit: ${sub.startsWith('r/')?sub:'r/'+sub}
+Subreddit rules:\n${rules.map((r,i)=>(i+1)+'. '+r).join('\n')}
+${question?'\nReddit question:\n'+question:''}
+User brand/site: ${brand||'not specified'}
+User planned answer:\n${answer}
+
+Respond ONLY in valid JSON:
+{"score":"Good or Needs Work or Bad","verdict":"one sentence is it safe to post","issues":["issue1"],"good_points":["good1"],"suggested_answer":"rewritten safe version that still mentions the brand naturally if relevant","tips":["tip1","tip2"]}`}]})});
+    const data=await res.json();
+    const raw=data.content.map(b=>b.text||'').join('');
+    let j;try{j=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch(e){throw new Error('parse error');}
+    const sc=j.score==='Good'?'sc-good':j.score==='Needs Work'?'sc-needs':'sc-bad';
+    const icon=j.score==='Good'?'&#10003;':j.score==='Needs Work'?'&#9888;':'&#10007;';
+    area.innerHTML='<div class="ac-result">'+
+      '<div class="ac-score '+sc+'">'+icon+' '+esc(j.score)+'</div>'+
+      '<div style="font-size:14px;line-height:1.6;margin-bottom:16px;">'+esc(j.verdict)+'</div>'+
+      (j.issues&&j.issues.length?'<div class="ac-section"><div class="ac-stitle">Issues found</div>'+j.issues.map(i=>'<div class="ac-item"><span style="color:var(--red);flex-shrink:0;">&#9679;</span><span>'+esc(i)+'</span></div>').join('')+'</div>':'')+
+      (j.good_points&&j.good_points.length?'<div class="ac-section"><div class="ac-stitle">What is good</div>'+j.good_points.map(i=>'<div class="ac-item"><span style="color:var(--green);flex-shrink:0;">&#9679;</span><span>'+esc(i)+'</span></div>').join('')+'</div>':'')+
+      (j.suggested_answer?'<div class="ac-section"><div class="ac-stitle">Suggested answer - safe to post</div><div class="suggested-box">'+esc(j.suggested_answer)+'</div></div>':'')+
+      (j.tips&&j.tips.length?'<div class="ac-section"><div class="ac-stitle">Tips for next time</div>'+j.tips.map(i=>'<div class="ac-item"><span style="color:var(--blue);flex-shrink:0;">&#9679;</span><span>'+esc(i)+'</span></div>').join('')+'</div>':'')+
+    '</div>';
+  }catch(e){area.innerHTML='<div class="ac-result"><div style="color:var(--red);font-size:13px;">Something went wrong. Please try again.</div></div>';}
+}
+
+// ── MISC ───────────────────────────────────────────────────────
+function setFilt(f,btn){activeFilt=f;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderList();}
+function clearDates(){document.getElementById('d-from').value='';document.getElementById('d-to').value='';renderList();}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// close modal on bg click
+document.getElementById('sync-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+loadData();
+</script>
+</body>
+</html>
